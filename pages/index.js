@@ -45,7 +45,7 @@ export default function HomePage() {
       </div>
 
       <div className="mt-16 text-sm text-gray-500">
-        Built with ❤️ using Next.js, Supabase, and FastAPI
+        Built by Aquib Khan
       </div>
     </div>
   )
