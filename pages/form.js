@@ -90,12 +90,14 @@ export default function FormPage() {
     }
   }
 
+  const [loading, setLoading] = useState(false)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     const traits = computeTraitScores()
     const lifestyle = Object.fromEntries(LIFESTYLE_FIELDS.map(k => [
       k,
-      k === 'cleanliness' ? (parseInt(form[k]) - 1) / 4 : form[k]  // normalize cleanliness
+      k === 'cleanliness' ? (parseInt(form[k]) - 1) / 4 : form[k]
     ]))
 
     if (!VALID_STATES.includes(form.state)) {
@@ -112,32 +114,39 @@ export default function FormPage() {
       ...lifestyle
     }
 
-const { data: inserted, error } = await supabase.from('users').insert([data]).select()
-if (!error && inserted && inserted.length > 0) {
-  const user_id = inserted[0].id
-  localStorage.setItem("user_id", user_id)
-  console.log("Stored user_id:", user_id)
+    setLoading(true)
+    try {
+      const { data: inserted, error } = await supabase.from('users').insert([data]).select()
+      if (error || !inserted || inserted.length === 0) {
+        alert("Error submitting profile: " + (error?.message || "Unknown error"))
+        return
+      }
 
-  // Send to match API
-  // ✅ New (your live backend)
-  const matchRes = await fetch("https://roommate-backend-r445.onrender.com/match",
- {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  })
+      localStorage.setItem("user_id", inserted[0].id)
 
-  if (!matchRes.ok) {
-    alert("Matching failed")
-    return
-  }
+      const matchRes = await fetch("https://roommate-backend-r445.onrender.com/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
 
-  const matchData = await matchRes.json()
-  localStorage.setItem("matches", JSON.stringify(matchData.top_matches))
-  router.push("/results")
-} else {
-  alert("Error submitting profile")
-}
+      if (!matchRes.ok) {
+        const errBody = await matchRes.text()
+        alert("Matching failed (status " + matchRes.status + "): " + errBody)
+        return
+      }
+
+      const matchData = await matchRes.json()
+      localStorage.setItem("matches", JSON.stringify(matchData.top_matches))
+      router.push("/results")
+    } catch (err) {
+      alert(
+        "Network error: " + err.message +
+        "\n\nThe backend may be waking up (Render free tier). Please wait 30–60 seconds and try again."
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
 
@@ -206,8 +215,12 @@ if (!error && inserted && inserted.length > 0) {
           </div>
 
           <div className="text-center">
-            <button type="submit" className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-8 py-3 rounded-full shadow-lg hover:from-purple-700 hover:to-blue-600">
-              Submit Profile
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-8 py-3 rounded-full shadow-lg hover:from-purple-700 hover:to-blue-600 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? "Finding matches… (may take ~30s)" : "Submit Profile"}
             </button>
           </div>
 
