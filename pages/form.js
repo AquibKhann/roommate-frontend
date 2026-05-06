@@ -81,14 +81,20 @@ export default function FormPage() {
       if (saved) {
         const parsed = JSON.parse(saved)
         setForm(prev => ({ ...prev, ...parsed }))
-        setIsReturningUser(true)
+        // Only show welcome banner if name was previously saved
+        if (parsed.name) setIsReturningUser(true)
       }
     } catch {}
   }, [])
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
+    setForm(prev => {
+      const updated = { ...prev, [name]: value }
+      // Autosave on every change so pre-fill always works on return
+      try { localStorage.setItem('savedProfile', JSON.stringify(updated)) } catch {}
+      return updated
+    })
   }
 
   const computeTraitScores = (f) => {
