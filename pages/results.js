@@ -66,7 +66,7 @@ export default function ResultsPage() {
                   <p className="text-sm text-gray-400">{match.gender} · {match.location}</p>
                 </div>
                 <span className="text-sm bg-indigo-50 text-indigo-700 rounded-full px-3 py-1 font-semibold">
-                  {(match.similarity * 100).toFixed(1)}% match
+                  {Math.min(match.similarity * 100, 100).toFixed(1)}% match
                 </span>
               </div>
 
@@ -79,7 +79,7 @@ export default function ResultsPage() {
               </div>
 
               {/* Breakdown bars */}
-              {match.breakdown && (
+              {match.breakdown ? (
                 <>
                   <hr className="mb-4 border-gray-100" />
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Why you matched</p>
@@ -89,6 +89,10 @@ export default function ResultsPage() {
                     ))}
                   </div>
                 </>
+              ) : (
+                <p className="text-xs text-gray-400 mt-3 italic">
+                  Re-submit your profile to see the match breakdown.
+                </p>
               )}
 
             </div>
